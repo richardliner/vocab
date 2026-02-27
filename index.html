@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 6 Vocab</title>
+
+    <style>
+
+        body{
+            background-color: rgb(29, 30, 30);
+        }
+
+        .cruelbox{
+            position:absolute;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-items: center;
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        }
+
+
+        .textbox{
+            border-radius: 1vw;
+            background-color:  rgb(46, 48, 48);
+            filter: drop-shadow(1vh 1vh 0 black);
+            padding: 2.5vh 2.5vw 2.5vh 2.5vw;
+            margin: 3vh 0 0 0;
+        }
+
+        .dictbox:nth-child(2){
+            margin: 13vh 0 0 0;
+        }
+
+        .dictbox{
+            border-radius: 1vw;
+            background-color:  rgb(46, 48, 48);
+            filter: drop-shadow(1vh 1vh 0 black);
+            padding: 2.5vh 2.5vw 2.5vh 2.5vw;
+            margin: 3vh 0 0 0;
+            display: flex;
+            color: aliceblue;
+        }
+
+        .dictbox h1{
+            color: inherit;
+        }
+
+        .dictbox p{
+            color: inherit;
+            text-align: left;
+        }
+
+        
+
+        .dictbox:nth-child(4n){
+            background-color:  rgb(68, 78, 78);
+        }
+
+        .dictbox:nth-child(4n+1){
+            background-color: rgb(68, 78, 78);
+        }
+
+        button{
+            border-radius: 1vw;
+            background-color:  rgb(70, 74, 74);
+            filter: drop-shadow(1vh 1vh 0 black);
+            margin: 3vh 0 0 0;
+            color: aliceblue;
+            font-size: 3vh;
+            text-align: center;
+            border: none;
+            font-family: inherit;
+        }
+
+        button:active{
+            background-color:  rgb(167, 56, 56);
+            scale: .95;
+        }
+
+        h1{
+            color: aliceblue;
+            font-size: 6vh;
+            text-align: center;
+            margin: 0;
+            align-self: center;
+        }
+
+        p{
+            color: aliceblue;
+            font-size: 3vh;
+            text-align: center;
+            margin: 0;
+            align-self: center;
+        }
+
+        #base{
+            visibility: visible;
+        }
+
+        #dictX{
+            visibility: hidden;
+        }
+        
+        #flashX{
+            visibility: hidden;
+        }
+
+        #matchX{
+            visibility: hidden;
+        }
+
+        #testX{
+            visibility: hidden;
+        }
+        
+    </style>
+
+</head>
+    <script>
+
+        window.onload = function(){
+            var Dictionary = {
+                Somnolent:"Drowsy; sleepy",
+                Soporific:"Causing sleep or fatigue",
+                Sopor1:"Sleep; drowsiness",
+                Languid:"Lacking energy; weak",
+                Languish:"To waste away",
+                Languor:"A lack of physical or mental energy",
+                Vigilant:"On the alert; watchful",
+                Vigilante:"Someone who takes law enforcement into his or her own hands.",
+                Acquiesce:"To give in",
+                Requiem:"A song or religious service for the dead or lost",
+                Quittance:"A repayment; a compensation",
+                Somn2:"Sleep",
+                Sopor2:"Sleep",
+                Lang2:"To be weak; to be faint",
+                Vigil2:"Watchful",
+                Quies2:"To rest"
+            }
+
+
+            function closeAll(){
+                document.body.style.overflow = 'hidden';
+                baseelem.style.visibility = "hidden"
+                dictelem.style.visibility = "hidden"
+                flashelem.style.visibility = "hidden"
+                matchelem.style.visibility = "hidden"
+                testelem.style.visibility = "hidden"
+                window.scrollTo(0,0)
+            }
+
+            var baseelem = document.getElementById("base")
+            var dictelem = document.getElementById("dictX")
+            var flashelem = document.getElementById("flashX")
+            var matchelem = document.getElementById("matchX")
+            var testelem = document.getElementById("testX")
+
+            // Base
+
+            baseelem.children[2].addEventListener("click",function(event){
+                closeAll()
+                dictelem.style.visibility = "visible"
+                document.body.style.overflow = 'scroll';
+            })
+
+            baseelem.children[3].addEventListener("click",function(event){
+                closeAll()
+                flashelem.style.visibility = "visible"
+            })
+
+            baseelem.children[4].addEventListener("click",function(event){
+                closeAll()
+                matchelem.style.visibility = "visible"
+            })
+
+            baseelem.children[5].addEventListener("click",function(event){
+                closeAll()
+                testelem.style.visibility = "visible"
+            })
+
+            // Dict
+
+            var dictquit = dictelem.children[0]
+            var word = dictelem.children[1].cloneNode(true)
+            var definition = dictelem.children[2].cloneNode(true)
+            dictelem.children[1].remove()
+            dictelem.children[1].remove()
+
+            dictquit.addEventListener("click",function(event){
+                closeAll()
+                baseelem.style.visibility = "visible"
+            })
+
+            for (let key in Dictionary){
+                var xWord = word.cloneNode(true)
+                var xDefinition = definition.cloneNode(true)
+                var textR = key
+                if (key.endsWith('1')){
+                    textR = key.slice(0,key.length-1)+" (Word)"
+                }
+                else if (key.endsWith('2')){
+                    textR = key.slice(0,key.length-1)+" (Root)"
+                }
+                xWord.children[0].innerHTML = textR
+                xDefinition.children[0].innerHTML = Dictionary[key]
+                dictelem.appendChild(xWord)
+                dictelem.appendChild(xDefinition)
+            }
+
+            // Flash
+            var wordOrdef = 0
+            var index = 0
+            var kiosk = []
+            for (let key in Dictionary){
+                kiosk.push([key,Dictionary[key]])
+            }
+            function changeFlash(){
+                var ultra = kiosk[index][wordOrdef]
+                if (ultra.endsWith("1")){
+                    ultra = ultra.slice(0,ultra.length-1)+" (Word)"
+                }
+                else if (ultra.endsWith("2")){
+                    ultra = ultra.slice(0,ultra.length-1)+" (Root)"
+                }
+                flashelem.children[1].children[0].textContent = ultra
+                if (wordOrdef == 0){
+                    flashelem.children[1].style.backgroundColor = "rgb(70, 74, 74)"
+                }
+                else if (wordOrdef == 1){
+                    flashelem.children[1].style.backgroundColor = "rgb(60, 64, 64)"
+                }
+
+            }
+            var flashquit = flashelem.children[0]
+            changeFlash()
+            flashelem.children[1].addEventListener("click",function(event){
+                wordOrdef= (wordOrdef+1)%2
+                changeFlash()
+            })
+            flashelem.children[2].children[0].addEventListener("click",function(event){
+                index-=1
+                wordOrdef = 0
+                if (index < 0){
+                    index = kiosk.length-1
+                }
+                changeFlash()
+            })
+            flashelem.children[2].children[1].addEventListener("click",function(event){
+                index+=1
+                wordOrdef = 0
+                if (index > kiosk.length-1){
+                    index = 0
+                }
+                changeFlash()
+            })
+            flashquit.addEventListener("click",function(event){
+                closeAll()
+                baseelem.style.visibility = "visible"
+            })
+
+            // Match
+
+
+
+        }
+
+    </script>
+
+    <div class="cruelbox" id="base">
+
+        <div class="textbox" style="width: 90vw; height: 15vh;">
+        <h1>Vocab Unit 6: <span style="color: rgb(211, 126, 70);">Study Guide</span></h1>
+        </div>
+
+        <div class="textbox" style="width: 90vw; height: 7vh;">
+            <p>This file is intended to be used on a phone vertically.</p>
+        </div>
+
+        <button style="width: 90vw; height: 7vh;" id="dict">
+            Dictionary
+        </button>
+
+        <button style="width: 90vw; height: 7vh;" id="flash">
+            Flashcards
+        </button>
+
+        <button style="width: 90vw; height: 7vh;" id="match">
+            Matching
+        </button>
+
+        <button style="width: 90vw; height: 7vh;" id="test">
+            Test
+        </button>
+
+    </div>
+
+    <div class="cruelbox" id="dictX">
+        
+        <button style="width: 90vw; height: 7vh; position: fixed; z-index: 100;" id="quit">
+            Quit
+        </button>
+
+        <div class="dictbox" style="width: 90vw; height: 8vh;">
+            <h1>WORD:</h1>
+        </div>
+
+        <div class="dictbox" style="width: 80vw; height: 10vh; margin: 1vh 0 3vh 0; align-self: flex-start;">
+            <p>Definition</p>
+        </div>
+        
+    </div>
+
+    <div class="cruelbox" id="flashX">
+        <button style="width: 90vw; height: 7vh;" id="quit">
+            Quit
+        </button>
+
+        <button style="width: 90vw; height: 40vh;" id="quit">
+            <h1>
+                WORD
+            </h1>
+        </button>
+
+        <div class="textbox" style="width: 90vw; height: 10vh; display: flex; flex-direction: row; justify-content: space-evenly;">
+            <button style="width: 30vw; height: 9vh; margin: 0;">
+                PREVIOUS
+            </button>
+
+            <button style="width: 30vw; height: 9vh; margin: 0;">
+                NEXT
+            </button>
+        </div>
+
+        <div class="textbox" style="width: 90vw; height: 12vh;">
+            <p style="margin: -1vh;">
+                It's highly recommended to study in intervals. Study for a bit, take a break, and come back later. This is builds better memory.
+            </p>
+        </div>
+
+
+    </div>
+
+    <div class="cruelbox" id="matchX">
+        <button style="width: 90vw; height: 7vh;" id="quit">
+            Quit
+        </button>
+    </div>
+
+    <div class="cruelbox" id="testX">
+        
+    </div>
+
+</body>
+</html>
