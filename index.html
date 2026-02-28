@@ -114,11 +114,29 @@
         #testX{
             visibility: hidden;
         }
+
+        #testActual{
+            visibility: hidden;
+        }
+
+        #testResults{
+            visibility: hidden;
+        }
         
     </style>
 
 </head>
     <script>
+
+        let lastTouchEnd = 0;
+
+        document.addEventListener('touchend', function (event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
 
         window.onload = function(){
             var Dictionary = {
@@ -140,15 +158,45 @@
                 Quies2:"To rest"
             }
 
+            function ReturnGrade(Percent){
+                if (Percent >= 90){
+                    return "A"
+                }
+                else if (Percent >= 80){
+                    return "B"
+                }
+                else if (Percent >= 70){
+                    return "C"
+                }
+                else if (Percent >= 60){
+                    return "D"
+                }
+                else{
+                    return "F"
+                }
+            }
+
 
             function closeAll(){
-                document.body.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden'
                 baseelem.style.visibility = "hidden"
                 dictelem.style.visibility = "hidden"
                 flashelem.style.visibility = "hidden"
                 matchelem.style.visibility = "hidden"
                 testelem.style.visibility = "hidden"
+                testactual.style.visibility = "hidden"
+                testresult.style.visibility = "hidden"
                 window.scrollTo(0,0)
+            }
+
+            function StringConversion(stringX){
+                if (stringX.endsWith("1")){
+                    stringX = stringX.slice(0,stringX.length-1)+" (Word)"
+                }
+                else if (stringX.endsWith("2")){
+                    stringX = stringX.slice(0,stringX.length-1)+" (Root)"
+                }
+                return stringX
             }
 
             var baseelem = document.getElementById("base")
@@ -156,6 +204,8 @@
             var flashelem = document.getElementById("flashX")
             var matchelem = document.getElementById("matchX")
             var testelem = document.getElementById("testX")
+            var testactual = document.getElementById("testActual")
+            var testresult = document.getElementById("testResults")
 
             // Base
 
@@ -196,14 +246,7 @@
             for (let key in Dictionary){
                 var xWord = word.cloneNode(true)
                 var xDefinition = definition.cloneNode(true)
-                var textR = key
-                if (key.endsWith('1')){
-                    textR = key.slice(0,key.length-1)+" (Word)"
-                }
-                else if (key.endsWith('2')){
-                    textR = key.slice(0,key.length-1)+" (Root)"
-                }
-                xWord.children[0].innerHTML = textR
+                xWord.children[0].innerHTML = StringConversion(key)
                 xDefinition.children[0].innerHTML = Dictionary[key]
                 dictelem.appendChild(xWord)
                 dictelem.appendChild(xDefinition)
@@ -216,15 +259,10 @@
             for (let key in Dictionary){
                 kiosk.push([key,Dictionary[key]])
             }
+
+
             function changeFlash(){
-                var ultra = kiosk[index][wordOrdef]
-                if (ultra.endsWith("1")){
-                    ultra = ultra.slice(0,ultra.length-1)+" (Word)"
-                }
-                else if (ultra.endsWith("2")){
-                    ultra = ultra.slice(0,ultra.length-1)+" (Root)"
-                }
-                flashelem.children[1].children[0].textContent = ultra
+                flashelem.children[1].children[0].textContent = StringConversion(kiosk[index][wordOrdef])
                 if (wordOrdef == 0){
                     flashelem.children[1].style.backgroundColor = "rgb(70, 74, 74)"
                 }
@@ -261,11 +299,244 @@
             })
 
             // Match
+            var matchquit = matchelem.children[0]
+            matchquit.addEventListener("click",function(event){
+                closeAll()
+                baseelem.style.visibility = "visible"
+            })
+            var matchoptiontemplate = matchelem.children[1].children[0].children[1].cloneNode(true)
+            matchelem.children[1].children[0].children[1].remove()
+
+            var matchWORDS = matchelem.children[1].children[0]
+            var matchDEFINITION = matchelem.children[1].children[1]
+            var matchCOUNTER = matchelem.children[3].children[0]
+            var matchRESET = matchelem.children[2]
+
+            function MATCHreset(){
+
+                matchCOUNTER.innerHTML = "0:0"
+
+                matchWORDS.innerHTML = '<p style="margin-top: 5%;">WORD</p>'
+                matchDEFINITION.innerHTML = '<p style="margin-top: 5%;">DEFINITION</p>'
+
+                let corrects = 0
+                let tries = 0
+
+                let currentmatchword = ['',null]
+                let currentmatchdefinition = ['',null]
+
+                let words = {}
+
+                for (let key in Dictionary){
+                    words[key] = Dictionary[key]
+                }
+
+                let matchDEF = []
+
+                function checkMATCH(){
+                    if (currentmatchword[0] != '' & currentmatchdefinition[0] != ''){
+                        tries += 1
+                        if (Dictionary[currentmatchword[0]] == currentmatchdefinition[0]){
+                            currentmatchword[1].remove()
+                            currentmatchdefinition[1].remove()
+                            corrects+=1
+                        }
+                        else{
+                            currentmatchword[1].style.backgroundColor = "rgb(70, 74, 74)"
+                            currentmatchdefinition[1].style.backgroundColor = "rgb(70, 74, 74)"
+                        }
+                        matchCOUNTER.innerHTML = String(corrects)+":"+String(tries)
+                        currentmatchword = ['',null]
+                        currentmatchdefinition = ['',null]
+                    }
+                }
+
+                for (let i=0; i<4; i++){
+                    let chosenWORD = Object.keys(words)[Math.floor(Math.random()*Object.keys(words).length)]
+                    let neoWORD = matchoptiontemplate.cloneNode(true)
+                    matchWORDS.appendChild(neoWORD)
+                    neoWORD.innerHTML = StringConversion(chosenWORD)
+                    matchDEF.push(words[chosenWORD])
+                    delete words[chosenWORD]
+                    neoWORD.addEventListener("click",function(){
+                        if (currentmatchword[1] != null){
+                            currentmatchword[1].style.backgroundColor = "rgb(70, 74, 74)"
+                        }
+                        currentmatchword = [chosenWORD,neoWORD]
+                        currentmatchword[1].style.backgroundColor = "rgb(167, 56, 56)"
+                        checkMATCH()
+                    })
+                }
+
+                for (let i=0; i<4; i++){
+                    let chosenINDEX = Math.floor(Math.random()*Object.keys(matchDEF).length)
+                    let chosenDEF = matchDEF[chosenINDEX]
+                    let neoDEF = matchoptiontemplate.cloneNode(true)
+                    matchDEFINITION.appendChild(neoDEF)
+                    neoDEF.innerHTML = StringConversion(chosenDEF)
+                    neoDEF.style.fontSize = "15px"
+                    matchDEF.splice(chosenINDEX,1)
+                    neoDEF.addEventListener("click",function(){
+                        if (currentmatchdefinition[1] != null){
+                            currentmatchdefinition[1].style.backgroundColor = "rgb(70, 74, 74)"
+                        }
+                        currentmatchdefinition = [chosenDEF,neoDEF]
+                        currentmatchdefinition[1].style.backgroundColor = "rgb(167, 56, 56)"
+                        checkMATCH()
+                    })
+                }
+            }
+            
+            MATCHreset()
+
+            matchRESET.addEventListener("click",function(){
+                MATCHreset()
+            })
+
+            // Test
+            var testquit = testelem.children[0]
+            testquit.addEventListener("click",function(event){
+                closeAll()
+                baseelem.style.visibility = "visible"
+            })
+
+            var testbegin = testelem.children[2]
+            testbegin.addEventListener("click",function(event){
+                ResetTest()
+                closeAll()
+                testactual.style.visibility = "visible"
+            })
+            
+            // Actual Test
+
+            var Answers = []
+            var AnswerText = testactual.children[0].children[0]
+            var AnswerBank = testactual.children[1]
+            var Tracker = testactual.children[2].children[0]
+
+            function pressANSWER(inner){
+                Q+=1
+                Tracker.innerHTML = String(Q+1)+"/"+String(Object.keys(Dictionary).length-3)
+                Answers.push([inner.name,inner.id])
+                if (Q == Object.keys(Dictionary).length-3){
+                    ShowResult()
+                }
+                else{
+                    CreateQuestion()
+                }
+            }
+
+            for (let i=0; i<4; i++){
+                AnswerBank.children[i].addEventListener("click",function(){
+                    pressANSWER(AnswerBank.children[i])
+                })
+            }
+
+            var Q = 0
+            
+            var choicelist = {}
+
+            function ResetTest(){
+                while (testresult.children.length > 2){
+                    testresult.children[2].remove()
+                }
+                Answers = []
+                Q = 0
+                for (let key in Dictionary){
+                    choicelist[key] = Dictionary[key]
+                }
+                Tracker.innerHTML = String(Q+1)+"/"+String(Object.keys(Dictionary).length-3)
+                CreateQuestion()
+            }
 
 
+            function CreateQuestion(){
+
+                console.log(choicelist)
+
+                let words = {}
+
+                for (let key in choicelist){
+                    words[key] = choicelist[key]
+                }
+
+                let wordList = []
+
+                for (let i=0; i<4; i++){
+                    let chosenWORD = Object.keys(words)[Math.floor(Math.random()*Object.keys(words).length)]
+                    wordList.push(chosenWORD)
+                    delete words[chosenWORD]
+                }
+
+                let answerKEY = wordList[Math.floor(Math.random()*4)]
+                delete choicelist[answerKEY]
+                AnswerText.innerHTML = Dictionary[answerKEY]
+
+                for (let i=0; i<4; i++){
+                    let chosenINDEX = Math.floor(Math.random()*wordList.length)
+                    AnswerBank.children[i].innerHTML = StringConversion(wordList[chosenINDEX])
+                    AnswerBank.children[i].name = wordList[chosenINDEX]
+                    AnswerBank.children[i].id = answerKEY
+                    wordList.splice(chosenINDEX,1)
+                }
+            }
+
+            // Test Result
+            var ResultQuit = testresult.children[3]
+            var ResultZ = testresult.children[0].children[2]
+            var ResultDEFtemplate = testresult.children[1].cloneNode(true)
+            var ResultANStemplate = testresult.children[2].cloneNode(true)
+            testresult.children[1].remove()
+            testresult.children[1].remove()
+            
+            var score = 0
+
+            function ShowResult(){
+                closeAll()
+                document.body.style.overflow = 'scroll'
+                testresult.style.visibility = "visible"
+
+                score=0
+
+                for (let i in Answers){
+
+                    var REdef = ResultDEFtemplate.cloneNode(true)
+                    testresult.appendChild(REdef)
+                    REdef.children[0].innerHTML = Dictionary[Answers[i][1]]
+
+                    var REans = ResultANStemplate.cloneNode(true)
+                    testresult.appendChild(REans)
+                    REans.children[2].children[0].innerHTML = StringConversion(Answers[i][1])
+                    REans.children[3].children[0].innerHTML = StringConversion(Answers[i][0])
+                 
+                    if (Dictionary[Answers[i][0]]==Dictionary[Answers[i][1]]){
+                        score+=1
+                        REdef.style.backgroundColor = "rgb(153, 205, 74)"
+                        REdef.children[0].style.color = "black"
+                        REans.style.backgroundColor = "rgb(153, 255, 74)"
+                    }
+                    else{
+                        REdef.style.backgroundColor = "rgb(205, 103, 74)"
+                        REdef.children[0].style.color = "black"
+                        REans.style.backgroundColor = "rgb(255, 103, 74)"
+                    }
+                }
+                console.log(ResultZ)
+                ResultZ.innerHTML = String(score)+"/"+String(Object.keys(Dictionary).length-3)
+                console.log(score)
+            }
+
+
+            ResultQuit.addEventListener("click",function(event){
+                closeAll()
+                testelem.style.visibility = "visible"
+                var nP = document.createElement("p")
+                let percentage = Math.round(100*(score/ (Object.keys(Dictionary).length-3)),2)
+                nP.innerHTML = + String(score)+"/"+String(Object.keys(Dictionary).length-3)+" — "+String(percentage)+"% — "+ReturnGrade(percentage)+""
+                testelem.children[3].appendChild(nP)
+            })
 
         }
-
     </script>
 
     <div class="cruelbox" id="base">
@@ -335,7 +606,7 @@
 
         <div class="textbox" style="width: 90vw; height: 12vh;">
             <p style="margin: -1vh;">
-                It's highly recommended to study in intervals. Study for a bit, take a break, and come back later. This is builds better memory.
+                It's highly recommended to study in spaced intervals. Study for a bit, take a break, and come back later. This is builds better memory.
             </p>
         </div>
 
@@ -346,10 +617,119 @@
         <button style="width: 90vw; height: 7vh;" id="quit">
             Quit
         </button>
+
+        <div class="textbox" style="width: 95vw; height: 50vh; display: flex; flex-direction: row; padding: 0; justify-content: space-evenly;">
+            
+            <div class="textbox" style="width: 46%; height: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: start; align-items: center; gap: 2.5%;">
+                <p style="margin-top: 5%;">WORD</p>
+                <button style="width: 40vw; height: 9vh; margin: 0;">
+                    Sober
+                </button>
+            </div>
+
+            <div class="textbox" style="width: 46%; height: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: start; align-items: center; gap: 2.5%;">
+                <p style="margin-top: 5%;">DEFINITION</p>
+            </div>
+
+        </div>
+
+        <button style="width: 90vw; height: 7vh;" id="quit">
+            Reset
+        </button>
+
+        <div class="textbox" style="width: 95vw; height: 20vh; display: flex; flex-direction: row; padding: 0; justify-content: space-evenly;">
+            <h1>0:0</h1>
+        </div>
+
     </div>
 
     <div class="cruelbox" id="testX">
+        <button style="width: 90vw; height: 7vh;" id="quit">
+            Quit
+        </button>
+
+
+        <div class="textbox" style="width: 90vw; height: 25vh; margin-top: 5%;">
+            <h1>TEST</h1>
+            <br>
+            <p>
+                A test that includes every word and definition. Match the word to the definition. You will see your score after you finish.
+            </p>
+        </div>
+
+
+        <button style="width: 90vw; height: 7vh;">
+            Begin
+        </button>
+
+        <div class="textbox" style="width: 90vw; height: 35vh; margin-top: 5%; overflow: scroll; scrollbar-width: none;">
+            <h1>SCORES:</h1>
+            <br>
+        </div>
+
+    </div>
+
+    <div class="cruelbox" id="testActual">
+        <div class="textbox" style="width: 90vw; height: 40vh; align-content: center;" id="quit">
+            <h1>
+                WORD
+            </h1>
+        </div>
+
+        <div class="textbox" style="width: 90vw; height: 20vh; display: flex; flex-direction: row; justify-content: space-evenly; flex-wrap: wrap;">
+            <button style="width: 40vw; height: 9vh; margin: 0;">
+                PREVIOUS
+            </button>
+
+            <button style="width: 40vw; height: 9vh; margin: 0;">
+                NEXT
+            </button>
+
+            <button style="width: 40vw; height: 9vh; margin: 0;">
+                NEXT
+            </button>
+
+            <button style="width: 40vw; height: 9vh; margin: 0;">
+                NEXT
+            </button>
+        </div>
+
+        <div class="textbox" style="width: 90vw; height: 12vh;">
+            <h1>0/16</h1>
+        </div>
+    </div>
+
+    <div class="cruelbox" id="testResults">
+        <div class="textbox" style="width: 90vw; height: 15vh;">
+            <h1>RESULTS</h1>
+            <br>
+            <p>12/12</p>
+        </div>
+
+        <div class="textbox" style="width: 90vw; height: 35vh; align-content: center;">
+            <h1>To consume a liquid</h1>
+        </div>
+        <div class="textbox" style="padding: 0; width: 90vw; height: 20vh; display: flex; flex-direction: row; justify-content: space-evenly; flex-wrap: wrap; align-content: space-evenly;">
+            <div class="textbox" style="width: 40%; height: 40%; padding: 0; margin: 0; display: flex; justify-content: center;">
+                <p>ANSWER:</p>
+            </div>
+
+            <div class="textbox" style="width: 40%; height: 40%; padding: 0; margin: 0; display: flex; justify-content: center;">
+                <p>YOU CHOSE:</p>
+            </div>
+
+            <div class="textbox" style="width: 40%; height: 40%; padding: 0; margin: 0; display: flex; justify-content: center;">
+                <p>Drink</p>
+            </div>
+
+            <div class="textbox" style="width: 40%; height: 40%; padding: 0; margin: 0; display: flex; justify-content: center;">
+                <p>Eat</p>
+            </div>
+        </div>
         
+        <button style="width: 90vw; height: 7vh;" id="quit">
+            Return
+        </button>
     </div>
 
 </body>
